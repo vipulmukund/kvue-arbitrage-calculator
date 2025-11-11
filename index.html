@@ -60,8 +60,9 @@
             // On Vercel: use serverless function (secure)
             return `/api/stock-price?ticker=${ticker}`;
         } else {
-            // Local development: use Yahoo Finance alternative API (free, no key needed)
-            return `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
+            // Local development: use CORS proxy to access Yahoo Finance
+            const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
+            return `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
         }
     }
 
@@ -87,15 +88,8 @@
         document.getElementById('lastUpdated').textContent = 'Fetching new data...';
         
         try {
-            // Fetch options with User-Agent header for Yahoo Finance
-            const fetchOptions = IS_PRODUCTION ? {} : {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-                }
-            };
-            
             // Fetch KVUE Price
-            const kvueResponse = await fetch(getApiUrl(KVUE_TICKER), fetchOptions);
+            const kvueResponse = await fetch(getApiUrl(KVUE_TICKER));
             if (!kvueResponse.ok) {
                 throw new Error(`HTTP error! status: ${kvueResponse.status}`);
             }
@@ -112,7 +106,7 @@
             }
 
             // Fetch KMB Price
-            const kmbResponse = await fetch(getApiUrl(KMB_TICKER), fetchOptions);
+            const kmbResponse = await fetch(getApiUrl(KMB_TICKER));
             if (!kmbResponse.ok) {
                 throw new Error(`HTTP error! status: ${kmbResponse.status}`);
             }
