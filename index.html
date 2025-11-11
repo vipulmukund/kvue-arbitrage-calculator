@@ -24,6 +24,7 @@
 
     <div class="data-source">
         <p>Data Source: **Financial Modeling Prep API** (Updates every 15 minutes)</p>
+        <p class="timestamp">Mode: <span id="envMode">--</span></p>
         <p class="timestamp">Last Updated: <span id="lastUpdated">--</span></p>
     </div>
 
@@ -48,8 +49,22 @@
     const CASH_COMPONENT = 3.50;
     const EXCHANGE_RATIO = 0.14625;
     
-    // Serverless function endpoint (Vercel API route)
-    const API_URL = (ticker) => `/api/stock-price?ticker=${ticker}`;
+    // Environment detection
+    const IS_PRODUCTION = window.location.hostname !== 'localhost' && 
+                          window.location.hostname !== '127.0.0.1' && 
+                          window.location.protocol !== 'file:';
+    
+    // Function to get the appropriate API URL based on environment
+    function getApiUrl(ticker) {
+        if (IS_PRODUCTION) {
+            // On Vercel: use serverless function (secure)
+            return `/api/stock-price?ticker=${ticker}`;
+        } else {
+            // Local development: use direct API with hardcoded key (for testing only)
+            const DEV_API_KEY = 'kwFBmrbBpX4WALFTazOqGMJiXq00sDeT';
+            return `https://financialmodelingprep.com/api/v3/quote/${ticker}?apikey=${DEV_API_KEY}`;
+        }
+    }
 
     // --- Core Calculation Function ---
     function calculateSpread(kvuePrice, kmbPrice) {
@@ -73,13 +88,19 @@
         document.getElementById('lastUpdated').textContent = 'Fetching new data...';
         
         try {
-            // Fetch KVUE Price from our serverless function
-            const kvueResponse = await fetch(API_URL(KVUE_TICKER));
+            // Fetch KVUE Price
+            const kvueResponse = await fetch(getApiUrl(KVUE_TICKER));
+            if (!kvueResponse.ok) {
+                throw new Error(`HTTP error! status: ${kvueResponse.status}`);
+            }
             const kvueData = await kvueResponse.json();
             const kvuePrice = kvueData[0]?.price;
 
-            // Fetch KMB Price from our serverless function
-            const kmbResponse = await fetch(API_URL(KMB_TICKER));
+            // Fetch KMB Price
+            const kmbResponse = await fetch(getApiUrl(KMB_TICKER));
+            if (!kmbResponse.ok) {
+                throw new Error(`HTTP error! status: ${kmbResponse.status}`);
+            }
             const kmbData = await kmbResponse.json();
             const kmbPrice = kmbData[0]?.price;
 
@@ -121,6 +142,9 @@
     // --- Auto-Refresh Setup ---
     const REFRESH_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes in milliseconds
 
+    // Display environment mode
+    document.getElementById('envMode').textContent = IS_PRODUCTION ? '🔒 Production (Secure)' : '🔧 Development';
+    
     // 1. Fetch data immediately on load
     fetchDataAndCalculate();
 
