@@ -87,8 +87,15 @@
         document.getElementById('lastUpdated').textContent = 'Fetching new data...';
         
         try {
+            // Fetch options with User-Agent header for Yahoo Finance
+            const fetchOptions = IS_PRODUCTION ? {} : {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+                }
+            };
+            
             // Fetch KVUE Price
-            const kvueResponse = await fetch(getApiUrl(KVUE_TICKER));
+            const kvueResponse = await fetch(getApiUrl(KVUE_TICKER), fetchOptions);
             if (!kvueResponse.ok) {
                 throw new Error(`HTTP error! status: ${kvueResponse.status}`);
             }
@@ -97,7 +104,7 @@
             // Parse price based on API response format
             let kvuePrice;
             if (IS_PRODUCTION) {
-                // FMP format (serverless function response)
+                // Serverless function response (FMP format)
                 kvuePrice = kvueData[0]?.price;
             } else {
                 // Yahoo Finance format
@@ -105,7 +112,7 @@
             }
 
             // Fetch KMB Price
-            const kmbResponse = await fetch(getApiUrl(KMB_TICKER));
+            const kmbResponse = await fetch(getApiUrl(KMB_TICKER), fetchOptions);
             if (!kmbResponse.ok) {
                 throw new Error(`HTTP error! status: ${kmbResponse.status}`);
             }
@@ -114,7 +121,7 @@
             // Parse price based on API response format
             let kmbPrice;
             if (IS_PRODUCTION) {
-                // FMP format (serverless function response)
+                // Serverless function response (FMP format)
                 kmbPrice = kmbData[0]?.price;
             } else {
                 // Yahoo Finance format

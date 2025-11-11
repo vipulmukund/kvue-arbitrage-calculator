@@ -22,7 +22,11 @@ export default async function handler(req, res) {
     try {
         // Fetch data from Yahoo Finance API (free, no key needed)
         const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
         
         if (!response.ok) {
             throw new Error(`Yahoo Finance API returned status ${response.status}`);
