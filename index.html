@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Updating KVUE/KMB Arbitrage Calculator</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; }
+        .container { max-width: 500px; margin: 0 auto; padding: 25px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        h2 { text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px; }
+        .data-source, .exchange-rate { background-color: #ecf0f1; padding: 15px; border-radius: 4px; margin-bottom: 20px; text-align: center; font-size: 0.9em; }
+        .result-box { background-color: #e8f7f7; border: 1px solid #3498db; padding: 15px; border-radius: 4px; font-size: 1.1em; }
+        .result-box p { margin: 5px 0; }
+        .price { font-weight: bold; color: #1e8449; }
+        .positive { color: green; font-weight: bold; }
+        .negative { color: red; font-weight: bold; }
+        .timestamp { font-size: 0.75em; color: #7f8c8d; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>⚡ Auto Arbitrage Calculator (KVUE/KMB)</h2>
+
+    <div class="data-source">
+        <p>Data Source: **Financial Modeling Prep API** (Updates every 15 minutes)</p>
+        <p class="timestamp">Last Updated: <span id="lastUpdated">--</span></p>
+    </div>
+
+    <div class="exchange-rate">
+        <p><strong>Merger Terms (Fixed):</strong></p>
+        <p>KVUE Share = $3.50 Cash + 0.14625 KMB Shares</p>
+    </div>
+
+    <div class="result-box">
+        <p><strong>Kenvue (KVUE) Price:</strong> $<span id="kvuePriceDisplay" class="price">--</span></p>
+        <p><strong>Kimberly-Clark (KMB) Price:</strong> $<span id="kmbPriceDisplay" class="price">--</span></p>
+        <hr>
+        <p><strong>Deal Implied Value for KVUE:</strong> $<span id="dealImpliedValue">--</span></p>
+        <p><strong>Arbitrage Spread:</strong> <span id="arbitrageSpread" class="positive">--%</span></p>
+    </div>
+</div>
+
+<script>
+    // --- Configuration ---
+    const KVUE_TICKER = 'KVUE';
+    const KMB_TICKER = 'KMB';
+    const CASH_COMPONENT = 3.50;
+    const EXCHANGE_RATIO = 0.14625;
+    
+    // **YOUR FMP API KEY HAS BEEN ADDED HERE**
+    const API_KEY = 'kwFBmrbBpX4WALFTazOqGMJiXq00sDeT'; 
+    
+    // FMP Endpoint for Stock Quote: /v3/quote/{ticker}
+    const FMP_URL = (ticker) => `https://financialmodelingprep.com/api/v3/quote/${ticker}?apikey=${API_KEY}`;
+
+    // --- Core Calculation Function ---
+    function calculateSpread(kvuePrice, kmbPrice) {
+        if (!kvuePrice || !kmbPrice) {
+            console.error("Missing stock prices for calculation.");
+            return { impliedValue: NaN, spreadPercent: NaN };
+        }
+
+        // Calculation 1: Deal Implied Value
+        const impliedValue = CASH_COMPONENT + (kmbPrice * EXCHANGE_RATIO);
+
+        // Calculation 2: Arbitrage Spread (%)
+        const spreadAbsolute = impliedValue - kvuePrice;
+        const spreadPercent = (spreadAbsolute / kvuePrice) * 100;
+
+        return { impliedValue, spreadPercent };
+    }
+
+    // --- Fetch Data and Update UI ---
+    async function fetchDataAndCalculate() {
+        document.getElementById('lastUpdated').textContent = 'Fetching new data...';
+        
+        try {
+            // Fetch KVUE Price
+            const kvueResponse = await fetch(FMP_URL(KVUE_TICKER));
+            const kvueData = await kvueResponse.json();
+            const kvuePrice = kvueData[0]?.price;
+
+            // Fetch KMB Price
+            const kmbResponse = await fetch(FMP_URL(KMB_TICKER));
+            const kmbData = await kmbResponse.json();
+            const kmbPrice = kmbData[0]?.price;
+
+            // Update UI with prices
+            if (kvuePrice) document.getElementById('kvuePriceDisplay').textContent = kvuePrice.toFixed(2);
+            if (kmbPrice) document.getElementById('kmbPriceDisplay').textContent = kmbPrice.toFixed(2);
+            
+            // Perform Calculation
+            const { impliedValue, spreadPercent } = calculateSpread(kvuePrice, kmbPrice);
+
+            // Update UI with results
+            const impliedValueElement = document.getElementById('dealImpliedValue');
+            const spreadElement = document.getElementById('arbitrageSpread');
+            
+            impliedValueElement.textContent = impliedValue.toFixed(2);
+            spreadElement.textContent = spreadPercent.toFixed(2) + '%';
+            
+            spreadElement.classList.remove('positive', 'negative');
+            if (spreadPercent > 0) {
+                spreadElement.classList.add('positive');
+            } else if (spreadPercent < 0) {
+                spreadElement.classList.add('negative');
+            }
+
+            // Update Timestamp
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+
+        } catch (error) {
+            console.error('Error fetching stock data:', error);
+            document.getElementById('lastUpdated').textContent = 'Error fetching data.';
+            // Clear or set error message for prices/results
+            document.getElementById('kvuePriceDisplay').textContent = 'N/A';
+            document.getElementById('kmbPriceDisplay').textContent = 'N/A';
+            document.getElementById('dealImpliedValue').textContent = 'N/A';
+            document.getElementById('arbitrageSpread').textContent = 'N/A';
+        }
+    }
+
+    // --- Auto-Refresh Setup ---
+    const REFRESH_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes in milliseconds
+
+    // 1. Fetch data immediately on load
+    fetchDataAndCalculate();
+
+    // 2. Set interval for automatic refreshing
+    setInterval(fetchDataAndCalculate, REFRESH_INTERVAL_MS);
+</script>
+
+</body>
+</html>
