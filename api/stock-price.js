@@ -1,5 +1,5 @@
 // Vercel Serverless Function to fetch stock prices
-// Uses Yahoo Finance API (free, no API key needed)
+// Uses Yahoo Finance API via CORS proxy (free, no API key needed)
 
 export default async function handler(req, res) {
     // Enable CORS
@@ -20,16 +20,14 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Fetch data from Yahoo Finance API (free, no key needed)
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-        });
+        // Use CORS proxy to fetch from Yahoo Finance
+        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`;
+        
+        const response = await fetch(proxyUrl);
         
         if (!response.ok) {
-            throw new Error(`Yahoo Finance API returned status ${response.status}`);
+            throw new Error(`Proxy API returned status ${response.status}`);
         }
         
         const data = await response.json();
