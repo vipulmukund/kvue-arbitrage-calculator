@@ -1,0 +1,10 @@
+# Environment variables / API keys
+config.js
+
+# macOS
+.DS_Store
+
+# Editor directories
+.vscode/
+.idea/
+

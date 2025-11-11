@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Auto-Updating KVUE/KMB Arbitrage Calculator</title>
+    <script src="config.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; }
         .container { max-width: 500px; margin: 0 auto; padding: 25px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
@@ -48,8 +49,8 @@
     const CASH_COMPONENT = 3.50;
     const EXCHANGE_RATIO = 0.14625;
     
-    // **YOUR FMP API KEY HAS BEEN ADDED HERE**
-    const API_KEY = 'kwFBmrbBpX4WALFTazOqGMJiXq00sDeT'; 
+    // API key is loaded from config.js
+    const API_KEY = window.CONFIG?.API_KEY || ''; 
     
     // FMP Endpoint for Stock Quote: /v3/quote/{ticker}
     const FMP_URL = (ticker) => `https://financialmodelingprep.com/api/v3/quote/${ticker}?apikey=${API_KEY}`;
@@ -73,6 +74,17 @@
 
     // --- Fetch Data and Update UI ---
     async function fetchDataAndCalculate() {
+        // Check if API key is configured
+        if (!API_KEY) {
+            document.getElementById('lastUpdated').textContent = 'Error: API key not configured';
+            document.getElementById('kvuePriceDisplay').textContent = 'N/A';
+            document.getElementById('kmbPriceDisplay').textContent = 'N/A';
+            document.getElementById('dealImpliedValue').textContent = 'N/A';
+            document.getElementById('arbitrageSpread').textContent = 'N/A';
+            console.error('API key not found. Please create config.js from config.example.js');
+            return;
+        }
+        
         document.getElementById('lastUpdated').textContent = 'Fetching new data...';
         
         try {
