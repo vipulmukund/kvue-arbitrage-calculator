@@ -1,5 +1,5 @@
 // Vercel Serverless Function to fetch stock prices
-// This keeps your API key secure on the server
+// Uses Yahoo Finance API (free, no API key needed)
 
 export default async function handler(req, res) {
     // Enable CORS
@@ -19,26 +19,26 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Ticker parameter is required' });
     }
 
-    // Get API key from environment variable
-    const API_KEY = process.env.API_KEY;
-    
-    if (!API_KEY) {
-        return res.status(500).json({ error: 'API key not configured on server' });
-    }
-
     try {
-        // Fetch data from Financial Modeling Prep API
-        const url = `https://financialmodelingprep.com/api/v3/quote/${ticker}?apikey=${API_KEY}`;
+        // Fetch data from Yahoo Finance API (free, no key needed)
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
         const response = await fetch(url);
         
         if (!response.ok) {
-            throw new Error(`FMP API returned status ${response.status}`);
+            throw new Error(`Yahoo Finance API returned status ${response.status}`);
         }
         
         const data = await response.json();
         
-        // Return the data to the frontend
-        return res.status(200).json(data);
+        // Extract the price and convert to FMP-like format for compatibility
+        const price = data.chart?.result?.[0]?.meta?.regularMarketPrice;
+        
+        if (!price) {
+            throw new Error('Unable to extract price from API response');
+        }
+        
+        // Return in FMP-compatible format
+        return res.status(200).json([{ price: price }]);
         
     } catch (error) {
         console.error('Error fetching stock data:', error);

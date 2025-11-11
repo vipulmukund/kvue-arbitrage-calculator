@@ -19,49 +19,51 @@ KVUE/KMB Arbitrage Calculator - Auto-updating stock price analyzer
    vercel
    ```
 
-3. **Add Environment Variable:**
-   - After deployment, go to your [Vercel Dashboard](https://vercel.com/dashboard)
-   - Select your project
-   - Go to **Settings** → **Environment Variables**
-   - Add:
-     - **Name:** `API_KEY`
-     - **Value:** Your Financial Modeling Prep API key
-     - **Environments:** Production, Preview, Development (select all)
-   - Click **Save**
-   - **Redeploy** the project for changes to take effect
-
-4. **Get a Free API Key:**
-   - Visit [Financial Modeling Prep](https://financialmodelingprep.com/developer/docs/)
-   - Sign up for a free account
-   - Copy your API key
+3. **That's it!** No API keys or environment variables needed.
+   - The app uses Yahoo Finance API (free, no authentication required)
+   - Just deploy and it works immediately
 
 ---
 
 ## 🏗️ Architecture
 
-This project uses **Vercel Serverless Functions** to keep your API key secure:
+This project uses **Vercel Serverless Functions** for optimal performance:
 
 - **Frontend:** `index.html` - Static HTML/JavaScript
 - **Backend:** `/api/stock-price.js` - Serverless function that fetches stock data
-- **Security:** API key is stored securely in Vercel environment variables (never exposed to users)
+- **Data Source:** Yahoo Finance API (free, no authentication needed)
 
 ```
-User → index.html → /api/stock-price → Financial Modeling Prep API
-                         ↑
-                    API_KEY (secure)
+User → index.html → /api/stock-price → Yahoo Finance API
+                         (serverless)
 ```
 
 ---
 
 ## 💻 Local Development
 
-### Option 1: Test with Vercel Dev (Recommended)
+### Option 1: Direct File Open (Easiest)
+```bash
+# Just open the HTML file in your browser
+open index.html
+
+# Or double-click index.html in Finder
+```
+
+### Option 2: Local Server
+```bash
+# Using Python
+python3 -m http.server 8000
+# Then visit http://localhost:8000
+
+# Or using Node.js
+npx serve
+```
+
+### Option 3: Vercel Dev (Most Similar to Production)
 ```bash
 # Install Vercel CLI
 npm install -g vercel
-
-# Create a local .env file
-echo "API_KEY=your_api_key_here" > .env
 
 # Run local development server
 vercel dev
@@ -69,16 +71,7 @@ vercel dev
 # Open http://localhost:3000
 ```
 
-### Option 2: Simple Local Testing
-For quick testing without the API functionality:
-```bash
-# Just open the HTML file
-open index.html
-
-# Or use a simple server
-python3 -m http.server 8000
-```
-Note: API calls won't work locally without Vercel Dev or a backend server.
+All options work! No API keys or setup needed.
 
 ---
 
@@ -113,28 +106,21 @@ Kvue-arbitrage-calculator/
 - **Frontend:** Vanilla HTML, CSS, JavaScript
 - **Backend:** Node.js (Vercel Serverless Functions)
 - **Hosting:** Vercel
-- **API:** Financial Modeling Prep
-
----
-
-## 📝 Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `API_KEY` | Financial Modeling Prep API key | Yes |
+- **API:** Yahoo Finance (free, no authentication)
 
 ---
 
 ## 🐛 Troubleshooting
 
 ### "Error fetching data" in the app
-- Check that you've added the `API_KEY` environment variable in Vercel
-- Make sure you've redeployed after adding the environment variable
-- Verify your API key is valid at [FMP Dashboard](https://financialmodelingprep.com/developer/docs/)
+- Refresh the page
+- Check browser console for detailed errors (F12 or Cmd+Option+J)
+- Verify you have internet connection
+- Yahoo Finance API may occasionally be rate-limited
 
-### Local development not working
-- Use `vercel dev` instead of opening the HTML file directly
-- Create a `.env` file with your `API_KEY`
+### CORS errors in local development
+- Open the HTML file directly (double-click) instead of using a local server
+- Or use `vercel dev` which handles CORS properly
 
 ---
 

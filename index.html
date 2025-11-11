@@ -60,9 +60,8 @@
             // On Vercel: use serverless function (secure)
             return `/api/stock-price?ticker=${ticker}`;
         } else {
-            // Local development: use direct API with hardcoded key (for testing only)
-            const DEV_API_KEY = 'kwFBmrbBpX4WALFTazOqGMJiXq00sDeT';
-            return `https://financialmodelingprep.com/api/v3/quote/${ticker}?apikey=${DEV_API_KEY}`;
+            // Local development: use Yahoo Finance alternative API (free, no key needed)
+            return `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
         }
     }
 
@@ -94,7 +93,16 @@
                 throw new Error(`HTTP error! status: ${kvueResponse.status}`);
             }
             const kvueData = await kvueResponse.json();
-            const kvuePrice = kvueData[0]?.price;
+            
+            // Parse price based on API response format
+            let kvuePrice;
+            if (IS_PRODUCTION) {
+                // FMP format (serverless function response)
+                kvuePrice = kvueData[0]?.price;
+            } else {
+                // Yahoo Finance format
+                kvuePrice = kvueData.chart?.result?.[0]?.meta?.regularMarketPrice;
+            }
 
             // Fetch KMB Price
             const kmbResponse = await fetch(getApiUrl(KMB_TICKER));
@@ -102,7 +110,16 @@
                 throw new Error(`HTTP error! status: ${kmbResponse.status}`);
             }
             const kmbData = await kmbResponse.json();
-            const kmbPrice = kmbData[0]?.price;
+            
+            // Parse price based on API response format
+            let kmbPrice;
+            if (IS_PRODUCTION) {
+                // FMP format (serverless function response)
+                kmbPrice = kmbData[0]?.price;
+            } else {
+                // Yahoo Finance format
+                kmbPrice = kmbData.chart?.result?.[0]?.meta?.regularMarketPrice;
+            }
 
             // Update UI with prices
             if (kvuePrice) document.getElementById('kvuePriceDisplay').textContent = kvuePrice.toFixed(2);
@@ -130,7 +147,11 @@
 
         } catch (error) {
             console.error('Error fetching stock data:', error);
-            document.getElementById('lastUpdated').textContent = 'Error fetching data.';
+            console.error('Error details:', error.message);
+            console.error('Is Production?', IS_PRODUCTION);
+            console.error('KVUE URL:', getApiUrl(KVUE_TICKER));
+            
+            document.getElementById('lastUpdated').textContent = `Error: ${error.message}`;
             // Clear or set error message for prices/results
             document.getElementById('kvuePriceDisplay').textContent = 'N/A';
             document.getElementById('kmbPriceDisplay').textContent = 'N/A';
